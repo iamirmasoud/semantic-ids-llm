@@ -23,7 +23,7 @@ logger = setup_logger("tokenize-items", log_to_file=True)
 # Data settings
 CATEGORY = "Video_Games"  # Product category to process
 NUM_ROWS = None  # Number of rows to process (None = all)
-DATA_DIR = Path("data")  # Data directory path
+DATA_DIR = Path("~/personal/v_tests/semantic-ids-llm/data").expanduser()  # Data directory path
 
 # Model settings
 MODEL_NAME = "Qwen/Qwen3-Embedding-0.6B"  # HuggingFace model name

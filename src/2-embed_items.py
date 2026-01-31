@@ -29,11 +29,11 @@ logger = setup_logger("embed-items", log_to_file=True)
 # Data settings
 CATEGORY = "Video_Games"  # Product category to process
 NUM_ROWS = None  # Number of rows to process (None = all)
-DATA_DIR = Path("data")  # Data directory path
+DATA_DIR = Path("~/personal/v_tests/semantic-ids-llm/data").expanduser()  # Data directory path
 
 # Model settings
 MODEL_NAME = "Qwen/Qwen3-Embedding-0.6B"  # HuggingFace model name
-BATCH_SIZE = 64  # Batch size for processing
+BATCH_SIZE = 16  # Batch size for processing
 TARGET_DIM = 1024  # Target embedding dimension
 
 # Other settings
@@ -44,11 +44,21 @@ LOG_FREQ = 1000  # Log progress every N items
 class TokenizedDataset(Dataset):
     """Dataset for pre-tokenized data with pinned memory support."""
 
-    def __init__(self, input_ids: np.ndarray, attention_mask: np.ndarray):
-        """Initialize with numpy arrays and convert to pinned tensors."""
-        # Convert to tensors and pin memory for faster GPU transfers
-        self.input_ids = torch.from_numpy(input_ids).pin_memory()
-        self.attention_mask = torch.from_numpy(attention_mask).pin_memory()
+    def __init__(self, input_ids: np.ndarray, attention_mask: np.ndarray, use_pin_memory: bool = False):
+        """Initialize with numpy arrays and convert to tensors.
+        
+        Args:
+            input_ids: Tokenized input IDs as numpy array
+            attention_mask: Attention mask as numpy array
+            use_pin_memory: Whether to pin memory (only works with CUDA, not MPS)
+        """
+        # Convert to tensors, optionally pin memory for faster GPU transfers (CUDA only)
+        self.input_ids = torch.from_numpy(input_ids)
+        self.attention_mask = torch.from_numpy(attention_mask)
+        
+        if use_pin_memory:
+            self.input_ids = self.input_ids.pin_memory()
+            self.attention_mask = self.attention_mask.pin_memory()
         self.length = len(input_ids)
 
     def __len__(self):
@@ -229,8 +239,10 @@ def embed_items():
         verify_embedding_consistency(model, device, pretokenized_data)
 
     # Create dataset and dataloader
-    logger.info("Creating DataLoader with pinned memory...")
-    dataset = TokenizedDataset(pretokenized_data["input_ids"], pretokenized_data["attention_mask"])
+    # Only use pinned memory for CUDA (not supported on MPS)
+    use_pin_memory = device == "cuda"
+    logger.info(f"Creating DataLoader (pin_memory={use_pin_memory})...")
+    dataset = TokenizedDataset(pretokenized_data["input_ids"], pretokenized_data["attention_mask"], use_pin_memory)
 
     # DataLoader with optimizations
     dataloader = DataLoader(

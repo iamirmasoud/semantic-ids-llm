@@ -31,7 +31,7 @@ class RQVAEConfig:
 
     # Data settings
     category: str = "Video_Games"  # Product category to process
-    data_dir: Path = field(default_factory=lambda: Path("data"))  # Data directory path
+    data_dir: Path = field(default_factory=lambda: Path("~/personal/v_tests/semantic-ids-llm/data").expanduser())  # Data directory path
     embeddings_path: Optional[Path] = None  # Path to embeddings file (auto-generated if None)
     checkpoint_dir: Path = field(default_factory=lambda: Path("checkpoints") / "rqvae")
 
@@ -972,7 +972,7 @@ if __name__ == "__main__":
     device = device_manager.device
 
     run_name = f"rqvae-L{config.codebook_quantization_levels}-C{config.codebook_size}-D{config.codebook_embedding_dim}"
-    run = wandb.init(project="rqvae", name=run_name, config=config.__dict__)
+    run = wandb.init(project="rqvae", name=run_name, config=config.__dict__, mode="offline")
     config.log_config()
 
     dataset = EmbeddingDataset(str(config.embeddings_path))

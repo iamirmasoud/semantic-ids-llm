@@ -221,3 +221,4 @@ logs/
 wandb/
 checkpoints/
 models/
+.idea/
